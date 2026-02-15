@@ -1,13 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <title>Our simple HTTP server</title>
   <link rel="stylesheet" type="text/css" href="/style.css">
-  
+
   <script>
+
+    const handleResponses = async (response) => {
+      const content = document.querySelector("#content");
+
+
+      switch (response.status) {
+        case 200:
+          content.innerHTML = "<b>Success</b>";
+          break;
+        case 201:
+          content.innerHTML = "<b>Created</b>";
+          break;
+        case 204:
+          content.innerHTML = "<b>Updated (No Content)</b>";
+          break;
+        case 400:
+          content.innerHTML = "<b>Bad Request</b>";
+
+          break;
+        case 404:
+          content.innerHTML = "<b>Not Found</b>";
+          break;
+
+      }
+
+
+      let responseObj = await response.json();
+
+      let jsonString = JSON.stringify(responseObj);
+
+      if (responseObj.message) {
+        content.innerHTML += `<p>Message: ${responseObj.message}</p>`;
+      }
+      else if(responseObj.users){
+        content.innerHTML += `<p>${responseObj.users}</p>`;
+
+      }
+
+
+    };
+
+    const sendPost = async (nameForm) => {
+
+      const name = nameForm.querySelector("#nameField").value;
+      const age = nameForm.querySelector("#ageField").value;
+
+
+      const url = nameForm.getAttribute('action');
+      const method = nameForm.getAttribute('method');
+
+      let formData = `name=${name}&age=${age}`;
+
+      formData = JSON.stringify({ name, age });
+
+      let response = await fetch(url, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: formData,
+      });
+
+      handleResponses(response);
+    }
+
+    const requestUpdate = async (userForm) => {
+
+      const url = userForm.querySelector('#urlField').value;
+      const method = userForm.querySelector('#methodSelect').value;
+
+      let response = await fetch(url, {
+        method,
+        headers: {
+          'Accept': 'application/json'
+        },
+      });
+      handleResponses(response);
+
+
+    };
+
+
+    const init = () => {
+      const userForm = document.querySelector('#userForm');
+      const nameForm = document.querySelector('#nameForm');
+
+      const getUsers = (e) => {
+
+        e.preventDefault();
+        requestUpdate(userForm);
+        return false;
+      }
+      const addUser = (e) => {
+        e.preventDefault();
+        sendPost(nameForm);
+        return false;
+      }
+      userForm.addEventListener('submit', getUsers);
+      nameForm.addEventListener('submit', addUser);
+
+    }
+    window.onload = init;
 
   </script>
 </head>
+
 <body>
   <section id="top">
     <h3>POST Status Code Tests</h3>
@@ -15,7 +120,7 @@
       <label for="name">Name: </label>
       <input id="nameField" type="text" name="name" />
       <label for="age">Age: </label>
-      <input id="ageField" type="number" name="age" min="0" max="100" step="1"/>
+      <input id="ageField" type="number" name="age" min="0" max="100" step="1" />
       <input type="submit" value="Add User" />
     </form>
     <form id="userForm" action="/getUsers" method="get">
@@ -33,4 +138,5 @@
   <section id="content">
   </section>
 </body>
+
 </html>
